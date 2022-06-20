@@ -1,51 +1,71 @@
-// Use apply functional programming style from
-// https://www.manning.com/books/functional-programming-in-scala
-// to solve the problem:
 // https://leetcode.com/problems/merge-k-sorted-lists/
 
 /**
  * Instructions on how to run the file
- * $ scala main.scala
+
+ * Run everything 
+ * $ scalac main.scala && DEBUG=true scala main.scala
  */
 
-// trait: https://docs.scala-lang.org/tour/traits.html
-sealed trait LinkedList[+A] {
-  import LinkedList.{Cons, Empty, cons, empty}
-  def foldRight[B](z: => B)(f: (A, => B) => B): B = this match {
-    case Cons(h,t) => f(h(), t().foldRight(z)(f))
-    case _ => z
-  }
+import scala.collection.mutable._
+import scala.util.Random
+import scala.util.Properties
 
-  def map[C](f: A => C): LinkedList[C] = foldRight[LinkedList[C]](empty)((head, rest) => cons(f(head), rest))
+object Logger {
+  val debug = Properties.envOrElse("DEBUG", "false") == "true"
 
-  def toList[A](): List[A] = foldRight[List[A]](List[A]())((head, rest) => head +: rest)
+  def info(message: String): Unit = println(s"INFO: $message")
+  def debug(message: String): Unit =  if(debug) println(s"DEBUG: $message")
 }
 
-// nothing: https://www.scala-lang.org/api/2.13.5/scala/Nothing.html
-case object Empty extends LinkedList[Nothing]
-
-// Cons: https://en.wikipedia.org/wiki/Cons#:~:text=In%20computer%20programming%2C%20cons%20(%2F,%2C%20or%20(cons)%20pairs.
-// Loosely related to the object-oriented notion of a constructor
-case class Cons[+A](h: () => A, t: () => LinkedList[A]) extends LinkedList[A]
-
-// companion object: https://docs.scala-lang.org/overviews/scala-book/companion-objects.html
-object LinkedList {
-  def cons[A](hd: => A, tl: => LinkedList[A]): LinkedList[A] = {
-    lazy val head = hd
-    lazy val tail = tl
-    Cons(() => head, () => tail)
+object Main {
+  def createArrayDeques(total: Int): Array[ArrayDeque[Int]] = {
+    Logger.debug(s"createArrayDeques.total: $total")
+    val array = Array.fill[Int](total)(0)
+    Logger.debug(s"createArrayDeques.array.length: ${array.length}")
+    array.map(_ => new ArrayDeque[Int]())
   }
 
-  def empty[A]: LinkedList[A] = Empty
+  def populatePriorityQueue(limit: Int, lists: Array[ArrayDeque[Int]]): PriorityQueue[ArrayDeque[Int]] = {
+    Logger.debug(s"populatePriorityQueue.limit: $limit")
+    Logger.debug(s"populatePriorityQueue.lists.length: ${lists.length}")
+    // This ordering by is still somewhat confusing
+    val pq = PriorityQueue.empty[ArrayDeque[Int]](Ordering.by(ad => ad.head)).reverse
+    
+    for( n <- 1 to limit ) {
+      val listIndex = Random.between(0, lists.length - 1)
+      lists(listIndex).append(n)
+    }
 
-  def apply[A](as: A*): LinkedList[A] =
-    if (as.isEmpty) empty else cons(as.head, apply(as.tail: _*))
+    lists.foreach(list => {
+      if(list.length > 0) {
+        pq.enqueue(list)
+      }
+    })
+    
+    pq
+  }
+
+  def publishPriorityQueue(queue: PriorityQueue[ArrayDeque[Int]], action: Int => Unit): Unit = {
+    Logger.debug("publishPriorityQueue starting")
+    while(!queue.isEmpty) {
+      val next = queue.dequeue()
+
+      Logger.debug(s"publishPriorityQueue.next.head: ${next.head}")
+      action(next.removeHead())
+      
+      if(next.size > 0) {
+        queue.enqueue(next)
+      }
+    }
+
+    Logger.debug("publishPriorityQueue done")
+  }
+
+  def main(args: Array[String]) = {
+    val lists = createArrayDeques(10)
+    val pq = populatePriorityQueue(1000, lists)
+    publishPriorityQueue(pq, (n: Int) => Logger.info(s"current: $n"))
+  }
 }
-
- object Main {
-   def main(args: Array[String]) = {
-     val ll = LinkedList(1,2,3,4,5)
-     println(ll.toList())
-   }
- }
 
