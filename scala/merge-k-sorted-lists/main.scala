@@ -3,7 +3,7 @@
 /**
  * Instructions on how to run the file
 
- * Run everything 
+ * Run everything
  * $ scalac main.scala && DEBUG=true scala main.scala
  */
 
@@ -30,8 +30,8 @@ object Main {
     Logger.debug(s"populatePriorityQueue.limit: $limit")
     Logger.debug(s"populatePriorityQueue.lists.length: ${lists.length}")
     // This ordering by is still somewhat confusing
-    val pq = PriorityQueue.empty[ArrayDeque[Int]](Ordering.by(ad => ad.head)).reverse
-    
+    val pq = PriorityQueue.empty[ArrayDeque[Int]](Ordering.by(ad => -ad.head))
+
     for( n <- 1 to limit ) {
       val listIndex = Random.between(0, lists.length - 1)
       lists(listIndex).append(n)
@@ -42,7 +42,7 @@ object Main {
         pq.enqueue(list)
       }
     })
-    
+
     pq
   }
 
@@ -53,7 +53,7 @@ object Main {
 
       Logger.debug(s"publishPriorityQueue.next.head: ${next.head}")
       action(next.removeHead())
-      
+
       if(next.size > 0) {
         queue.enqueue(next)
       }
@@ -65,7 +65,12 @@ object Main {
   def main(args: Array[String]) = {
     val lists = createArrayDeques(10)
     val pq = populatePriorityQueue(1000, lists)
-    publishPriorityQueue(pq, (n: Int) => Logger.info(s"current: $n"))
+    Logger.info(pq.toString)
+
+    var list = new ListBuffer[Int]()
+    publishPriorityQueue(pq, (n: Int) => list.addOne(n))
+
+    Logger.info(s"list: $list.toList")
   }
 }
 
