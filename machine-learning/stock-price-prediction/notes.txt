@@ -1,0 +1,16 @@
+https://www.youtube.com/watch?v=SauRW1Vok44
+
+- univariate time series
+- one variable
+- yesterday's closing share price
+- predict today's closing share price
+
+- multivariate time series
+- trading volume
+- news
+
+stationarity -> statistical properties stay constant over time
+
+LSTM -> long short term memory
+- has forget gates
+
